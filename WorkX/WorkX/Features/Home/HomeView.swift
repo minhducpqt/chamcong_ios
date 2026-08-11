@@ -12,24 +12,35 @@ struct HomeView: View {
         NavigationStack {
             List {
                 if let user = session.user {
-                    Section("Tài khoản") {
+                    Section("Tài khoản của bạn") {
                         LabeledContent("Họ tên", value: user.full_name)
                         LabeledContent("Username", value: user.username)
-                        LabeledContent("Role", value: user.role)
-                        if let local = user.username_local {
-                            LabeledContent("Local", value: local)
-                        }
+                        LabeledContent("Role", value: user.roleLabel)
                     }
                 }
+
                 if let company = session.company {
                     Section("Công ty") {
                         LabeledContent("Mã", value: company.company_code)
                         LabeledContent("Tên", value: company.name)
-                        LabeledContent("Trạng thái", value: company.is_active ? "Active" : "Disabled")
                     }
-                } else if session.user?.role == "super_admin" {
-                    Section("Công ty") {
-                        Text("Super admin — không thuộc công ty")
+                }
+
+                Section("Quản lý") {
+                    if session.user?.role == AppRole.superAdmin {
+                        NavigationLink {
+                            CompanyListView()
+                        } label: {
+                            Label("Quản lý công ty & tài khoản", systemImage: "building.2")
+                        }
+                    } else if session.user?.role == AppRole.companyAdmin {
+                        NavigationLink {
+                            CompanyAccountsView()
+                        } label: {
+                            Label("Quản lý tài khoản công ty", systemImage: "person.3")
+                        }
+                    } else {
+                        Text("Nhân viên chưa có quyền quản trị.")
                             .foregroundStyle(.secondary)
                     }
                 }

@@ -75,7 +75,6 @@ final class APIClient {
             return payload
         }
 
-        // detail error from FastAPI
         if let err = try? JSONDecoder().decode(DetailError.self, from: data) {
             throw APIError.server(err.detail)
         }
@@ -84,6 +83,8 @@ final class APIClient {
         }
         throw APIError.decode
     }
+
+    // MARK: Auth
 
     func login(username: String, password: String) async throws -> LoginData {
         try await request(
@@ -96,6 +97,108 @@ final class APIClient {
 
     func me() async throws -> MeData {
         try await request(path: "/api/v1/auth/me")
+    }
+
+    // MARK: Super — companies
+
+    func listCompanies(q: String? = nil) async throws -> PagedData<Company> {
+        var path = "/api/v1/super/companies?page=1&size=100"
+        if let q, !q.isEmpty {
+            path += "&q=\(q.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? q)"
+        }
+        return try await request(path: path)
+    }
+
+    func getCompany(id: Int) async throws -> CompanyDetail {
+        try await request(path: "/api/v1/super/companies/\(id)")
+    }
+
+    func createCompany(_ body: CompanyCreateRequest) async throws -> CompanyDetail {
+        try await request(path: "/api/v1/super/companies", method: "POST", body: body)
+    }
+
+    func enableCompany(id: Int) async throws -> Company {
+        try await request(path: "/api/v1/super/companies/\(id)/enable", method: "POST")
+    }
+
+    func disableCompany(id: Int) async throws -> Company {
+        try await request(path: "/api/v1/super/companies/\(id)/disable", method: "POST")
+    }
+
+    // MARK: Super — accounts trong cty
+
+    func superListAccounts(companyId: Int, q: String? = nil) async throws -> PagedData<Account> {
+        var path = "/api/v1/super/companies/\(companyId)/accounts?page=1&size=100"
+        if let q, !q.isEmpty {
+            path += "&q=\(q.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? q)"
+        }
+        return try await request(path: path)
+    }
+
+    func superCreateAccount(companyId: Int, body: AccountCreateRequest) async throws -> Account {
+        try await request(
+            path: "/api/v1/super/companies/\(companyId)/accounts",
+            method: "POST",
+            body: body
+        )
+    }
+
+    func superEnableAccount(id: Int) async throws -> Account {
+        try await request(path: "/api/v1/super/accounts/\(id)/enable", method: "POST")
+    }
+
+    func superDisableAccount(id: Int) async throws -> Account {
+        try await request(path: "/api/v1/super/accounts/\(id)/disable", method: "POST")
+    }
+
+    func superChangePassword(id: Int, newPassword: String) async throws -> Account {
+        try await request(
+            path: "/api/v1/super/accounts/\(id)/change-password",
+            method: "POST",
+            body: ChangePasswordRequest(new_password: newPassword)
+        )
+    }
+
+    func superUpdateAccount(id: Int, body: AccountUpdateRequest) async throws -> Account {
+        try await request(path: "/api/v1/super/accounts/\(id)", method: "PATCH", body: body)
+    }
+
+    // MARK: Company admin — accounts
+
+    func companyListAccounts(q: String? = nil) async throws -> PagedData<Account> {
+        var path = "/api/v1/company/accounts?page=1&size=100"
+        if let q, !q.isEmpty {
+            path += "&q=\(q.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? q)"
+        }
+        return try await request(path: path)
+    }
+
+    func companyCreateAccount(body: AccountCreateRequest) async throws -> Account {
+        try await request(path: "/api/v1/company/accounts", method: "POST", body: body)
+    }
+
+    func companyEnableAccount(id: Int) async throws -> Account {
+        try await request(path: "/api/v1/company/accounts/\(id)/enable", method: "POST")
+    }
+
+    func companyDisableAccount(id: Int) async throws -> Account {
+        try await request(path: "/api/v1/company/accounts/\(id)/disable", method: "POST")
+    }
+
+    func companyChangePassword(id: Int, newPassword: String) async throws -> Account {
+        try await request(
+            path: "/api/v1/company/accounts/\(id)/change-password",
+            method: "POST",
+            body: ChangePasswordRequest(new_password: newPassword)
+        )
+    }
+
+    func companyUpdateAccount(id: Int, body: AccountUpdateRequest) async throws -> Account {
+        try await request(path: "/api/v1/company/accounts/\(id)", method: "PATCH", body: body)
+    }
+
+    func companyMe() async throws -> CompanyDetail {
+        try await request(path: "/api/v1/company/me")
     }
 }
 
