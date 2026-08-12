@@ -247,6 +247,12 @@ struct OfficeDetailView: View {
     let mode: OfficeManageMode
     let officeId: Int
 
+    private enum IpConfirmAction {
+        case addManual
+        case addCurrent
+        case delete(Int)
+    }
+
     @State private var office: CompanyOffice?
     @State private var name = ""
     @State private var address = ""
@@ -260,6 +266,8 @@ struct OfficeDetailView: View {
     @State private var error: String?
     @State private var message: String?
     @State private var loading = false
+    @State private var ipConfirmAction: IpConfirmAction?
+    @State private var showIpConfirm = false
 
     var body: some View {
         Form {
@@ -282,7 +290,8 @@ struct OfficeDetailView: View {
                         }
                         Spacer()
                         Button(role: .destructive) {
-                            Task { await deleteIp(ip.id) }
+                            ipConfirmAction = .delete(ip.id)
+                            showIpConfirm = true
                         } label: {
                             Image(systemName: "trash")
                         }
@@ -310,7 +319,8 @@ struct OfficeDetailView: View {
                                 .foregroundStyle(.secondary)
                         }
                         Button("Thêm IP hiện tại") {
-                            Task { await addCurrentIp() }
+                            ipConfirmAction = .addCurrent
+                            showIpConfirm = true
                         }
                         .disabled(ips.contains { $0.network == currentIp })
                     } else {
@@ -321,7 +331,10 @@ struct OfficeDetailView: View {
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                 TextField("Nhãn (tuỳ chọn)", text: $newLabel)
-                Button("Thêm IP") { Task { await addIp() } }
+                Button("Thêm IP") {
+                    ipConfirmAction = .addManual
+                    showIpConfirm = true
+                }
                     .disabled(newNetwork.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
             Section {
@@ -344,6 +357,79 @@ struct OfficeDetailView: View {
         .task {
             await load()
             await loadCurrentIp()
+        }
+        .alert(
+            ipConfirmTitle,
+            isPresented: $showIpConfirm,
+            presenting: ipConfirmAction
+        ) { action in
+            Button("Huỷ", role: .cancel) {
+                ipConfirmAction = nil
+            }
+            Button(
+                ipConfirmButtonTitle(for: action),
+                role: ipConfirmIsDestructive(action) ? .destructive : nil
+            ) {
+                Task { await performIpAction(action) }
+            }
+        } message: { action in
+            Text(ipConfirmMessage(for: action))
+        }
+    }
+
+    private var trimmedNewNetwork: String {
+        newNetwork.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var ipConfirmTitle: String {
+        guard let action = ipConfirmAction else { return "Xác nhận thao tác" }
+        switch action {
+        case .addManual, .addCurrent:
+            return "Xác nhận thêm IP"
+        case .delete:
+            return "Xác nhận xoá IP"
+        }
+    }
+
+    private func ipConfirmButtonTitle(for action: IpConfirmAction) -> String {
+        switch action {
+        case .addManual, .addCurrent:
+            return "Thêm IP"
+        case .delete:
+            return "Xoá IP"
+        }
+    }
+
+    private func ipConfirmIsDestructive(_ action: IpConfirmAction) -> Bool {
+        if case .delete = action { return true }
+        return false
+    }
+
+    private func ipConfirmMessage(for action: IpConfirmAction) -> String {
+        switch action {
+        case .addManual:
+            return "Thêm IP/CIDR \(trimmedNewNetwork) vào danh sách cho trụ sở này?"
+        case .addCurrent:
+            let ip = currentIp?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return "Thêm IP hiện tại \(ip) vào danh sách cho trụ sở này?"
+        case .delete(let ipId):
+            let network = ips.first(where: { $0.id == ipId })?.network ?? "IP này"
+            return "Xoá \(network) khỏi danh sách IP của trụ sở?"
+        }
+    }
+
+    private func performIpAction(_ action: IpConfirmAction) async {
+        defer {
+            showIpConfirm = false
+            ipConfirmAction = nil
+        }
+        switch action {
+        case .addManual:
+            await addIp()
+        case .addCurrent:
+            await addCurrentIp()
+        case .delete(let ipId):
+            await deleteIp(ipId)
         }
     }
 

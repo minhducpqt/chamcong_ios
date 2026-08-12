@@ -470,6 +470,42 @@ final class APIClient {
             body: body
         )
     }
+
+    // MARK: Leave requests
+
+    func createLeaveRequest(_ body: LeaveRequestCreateBody) async throws -> LeaveRequest {
+        try await request(path: "/api/v1/company/leave-requests", method: "POST", body: body)
+    }
+
+    func myLeaveRequests() async throws -> LeaveRequestPage {
+        try await request(path: "/api/v1/company/leave-requests/me")
+    }
+
+    func companyLeaveRequests(status: String? = nil) async throws -> LeaveRequestPage {
+        var path = "/api/v1/company/leave-requests"
+        if let status { path += "?status=\(status)" }
+        return try await request(path: path)
+    }
+
+    func cancelLeaveRequest(id: Int) async throws -> LeaveRequest {
+        try await request(path: "/api/v1/company/leave-requests/\(id)/cancel", method: "POST")
+    }
+
+    func approveLeaveRequest(id: Int, note: String? = nil) async throws -> LeaveRequest {
+        try await request(
+            path: "/api/v1/company/leave-requests/\(id)/approve",
+            method: "POST",
+            body: LeaveRequestReviewBody(review_note: note)
+        )
+    }
+
+    func rejectLeaveRequest(id: Int, note: String? = nil) async throws -> LeaveRequest {
+        try await request(
+            path: "/api/v1/company/leave-requests/\(id)/reject",
+            method: "POST",
+            body: LeaveRequestReviewBody(review_note: note)
+        )
+    }
 }
 
 private struct DetailError: Decodable {

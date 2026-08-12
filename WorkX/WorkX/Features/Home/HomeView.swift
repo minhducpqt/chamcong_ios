@@ -51,6 +51,11 @@ struct HomeView: View {
                         } label: {
                             Label("Lịch làm việc", systemImage: "calendar")
                         }
+                        NavigationLink {
+                            LeaveApprovalView()
+                        } label: {
+                            Label("Duyệt đơn nghỉ", systemImage: "calendar.badge.clock")
+                        }
                     } else if session.user?.role == AppRole.staff {
                         Text("Dùng tab Chấm công để check-in/out.")
                             .foregroundStyle(.secondary)

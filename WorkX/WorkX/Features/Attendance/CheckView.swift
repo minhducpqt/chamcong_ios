@@ -103,6 +103,15 @@ struct CheckView: View {
                 }
             }
             .navigationTitle("Chấm công")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        LeaveMyRequestsView()
+                    } label: {
+                        Label("Đơn nghỉ", systemImage: "calendar.badge.clock")
+                    }
+                }
+            }
             .refreshable { await loadHistory() }
             .task {
                 await autoCheck()

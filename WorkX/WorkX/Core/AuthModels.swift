@@ -255,6 +255,73 @@ struct PurgeAccountsResult: Decodable {
     let company_id: Int?
 }
 
+// MARK: - Leave requests
+
+struct LeaveRequestCreateBody: Encodable {
+    let leave_type: String
+    let leave_date: String
+    let start_time: String?
+    let end_time: String?
+    let reason: String?
+}
+
+struct LeaveRequestReviewBody: Encodable {
+    let review_note: String?
+}
+
+struct LeaveRequest: Codable, Identifiable, Hashable {
+    let id: Int
+    let company_id: Int
+    let account_id: Int
+    let account_username: String?
+    let account_full_name: String?
+    let leave_type: String
+    let leave_date: String
+    let start_time: String?
+    let end_time: String?
+    let reason: String?
+    let status: String
+    let reviewed_by: Int?
+    let reviewed_at: String?
+    let review_note: String?
+    let created_at: String
+    let updated_at: String?
+
+    var leaveTypeLabel: String {
+        switch leave_type {
+        case "morning": return "Nghỉ sáng"
+        case "afternoon": return "Nghỉ chiều"
+        case "full_day": return "Nghỉ cả ngày"
+        case "hours": return "Nghỉ theo giờ"
+        default: return leave_type
+        }
+    }
+
+    var statusLabel: String {
+        switch status {
+        case "pending": return "Chờ duyệt"
+        case "approved": return "Đã duyệt"
+        case "rejected": return "Từ chối"
+        case "cancelled": return "Đã huỷ"
+        default: return status
+        }
+    }
+
+    var timeRangeLabel: String {
+        if leave_type == "hours", let s = start_time, let e = end_time {
+            return "\(s) – \(e)"
+        }
+        return leaveTypeLabel
+    }
+}
+
+struct LeaveRequestPage: Decodable {
+    let data: [LeaveRequest]
+    let page: Int?
+    let size: Int?
+    let total: Int?
+}
+
 // MARK: - Attendance
 
 struct AttendanceCheckRequest: Encodable {
