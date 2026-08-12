@@ -404,6 +404,40 @@ final class APIClient {
         try await request(path: "/api/v1/company/attendance/me?days=\(days)")
     }
 
+    func companyAttendanceOverview(days: Int = 30) async throws -> AttendanceOverviewData {
+        try await request(path: "/api/v1/company/attendance/overview?days=\(days)")
+    }
+
+    func companyAttendanceOffice(officeId: Int, days: Int = 30) async throws -> OfficeAttendanceData {
+        try await request(path: "/api/v1/company/attendance/offices/\(officeId)?days=\(days)")
+    }
+
+    func companyAttendanceEmployee(accountId: Int, days: Int = 100) async throws -> AttendanceHistoryData {
+        try await request(path: "/api/v1/company/attendance/employees/\(accountId)?days=\(days)")
+    }
+
+    func superAttendanceOverview(companyId: Int, days: Int = 30) async throws -> AttendanceOverviewData {
+        try await request(
+            path: "/api/v1/super/companies/\(companyId)/attendance/overview?days=\(days)"
+        )
+    }
+
+    func superAttendanceOffice(
+        companyId: Int, officeId: Int, days: Int = 30
+    ) async throws -> OfficeAttendanceData {
+        try await request(
+            path: "/api/v1/super/companies/\(companyId)/attendance/offices/\(officeId)?days=\(days)"
+        )
+    }
+
+    func superAttendanceEmployee(
+        companyId: Int, accountId: Int, days: Int = 100
+    ) async throws -> AttendanceHistoryData {
+        try await request(
+            path: "/api/v1/super/companies/\(companyId)/attendance/employees/\(accountId)?days=\(days)"
+        )
+    }
+
     func getWorkCalendar() async throws -> WorkCalendarData {
         try await request(path: "/api/v1/company/work-calendar")
     }

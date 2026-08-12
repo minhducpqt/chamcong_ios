@@ -11,7 +11,24 @@ struct ContentView: View {
     var body: some View {
         Group {
             if session.isLoggedIn {
-                if isCompanyUser {
+                if session.user?.role == AppRole.companyAdmin {
+                    TabView {
+                        NavigationStack {
+                            AdminOverviewView(mode: .companyAdmin)
+                        }
+                        .tabItem {
+                            Label("Tổng quan", systemImage: "chart.bar.fill")
+                        }
+                        CheckView()
+                            .tabItem {
+                                Label("Check", systemImage: "hand.tap.fill")
+                            }
+                        HomeView()
+                            .tabItem {
+                                Label("Tài khoản", systemImage: "person.crop.circle")
+                            }
+                    }
+                } else if session.user?.role == AppRole.staff {
                     TabView {
                         CheckView()
                             .tabItem {
@@ -32,11 +49,6 @@ struct ContentView: View {
         .task {
             await session.restoreSession()
         }
-    }
-
-    private var isCompanyUser: Bool {
-        let role = session.user?.role
-        return role == AppRole.companyAdmin || role == AppRole.staff
     }
 }
 

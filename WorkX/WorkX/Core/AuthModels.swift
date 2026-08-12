@@ -339,3 +339,72 @@ struct WorkCalendarUpdateRequest: Encodable {
     let off_weekdays: [Int]?
     let half_day_off: [String: String]?
 }
+
+// MARK: - Admin attendance overview
+
+struct OfficeOverviewItem: Codable, Identifiable, Hashable {
+    let office_id: Int
+    let name: String
+    let is_default: Bool
+    let is_active: Bool
+    let employee_count: Int
+    let late_days: Int
+    let early_days: Int
+    let total_late_minutes: Int
+    let total_early_minutes: Int
+    let employees_with_late: Int
+    let employees_with_early: Int
+    let severity_hint: String
+
+    var id: Int { office_id }
+
+    var totalMinutes: Int { total_late_minutes + total_early_minutes }
+}
+
+struct AttendanceOverviewData: Codable {
+    let days: Int
+    let office_count: Int
+    let offices: [OfficeOverviewItem]
+}
+
+struct OfficeBriefAdmin: Codable, Hashable {
+    let id: Int
+    let name: String
+    let is_default: Bool
+    let is_active: Bool
+    let address: String?
+}
+
+struct OfficeAttendanceStats: Codable, Hashable {
+    let late_days: Int
+    let early_days: Int
+    let total_late_minutes: Int
+    let total_early_minutes: Int
+    let employees_with_late: Int
+    let employees_with_early: Int
+    let employee_count: Int
+}
+
+struct EmployeeAttendanceRow: Codable, Identifiable, Hashable {
+    let account_id: Int
+    let full_name: String
+    let username: String
+    let role: String
+    let late_days: Int
+    let early_days: Int
+    let total_late_minutes: Int
+    let total_early_minutes: Int
+    let severity: String
+    let last_checkin_at: String?
+    let last_checkout_at: String?
+
+    var id: Int { account_id }
+
+    var totalMinutes: Int { total_late_minutes + total_early_minutes }
+}
+
+struct OfficeAttendanceData: Codable {
+    let office: OfficeBriefAdmin
+    let stats: OfficeAttendanceStats
+    let employees: [EmployeeAttendanceRow]
+}

@@ -19,7 +19,7 @@ struct CompanyListView: View {
             }
             ForEach(items) { c in
                 NavigationLink {
-                    CompanyDetailView(companyId: c.id)
+                    CompanyWorkspaceView(companyId: c.id)
                 } label: {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
