@@ -22,11 +22,29 @@ struct OfficeManageView: View {
     @State private var errorMessage: String?
     @State private var isLoading = false
     @State private var showCreate = false
+    @State private var showResetConfirm = false
+    @State private var resetCode = ""
+    @State private var resetMessage: String?
+    @State private var isResetting = false
 
     var body: some View {
         List {
             if let errorMessage {
                 Text(errorMessage).foregroundStyle(.red)
+            }
+            if let resetMessage {
+                Text(resetMessage).foregroundStyle(.green)
+            }
+            Section {
+                Button(role: .destructive) {
+                    resetCode = ""
+                    showResetConfirm = true
+                } label: {
+                    Label("Reset: gán trụ sở chính cho tất cả NV", systemImage: "arrow.triangle.2.circlepath")
+                }
+                .disabled(offices.first(where: { $0.is_default }) == nil)
+            } footer: {
+                Text("Mọi nhân viên sẽ chỉ còn trụ sở master hiện tại. Cần gõ 123 để xác nhận.")
             }
             Section("Trụ sở") {
                 if offices.isEmpty && !isLoading {
@@ -59,6 +77,39 @@ struct OfficeManageView: View {
                 }
             }
         }
+        .sheet(isPresented: $showResetConfirm) {
+            NavigationStack {
+                Form {
+                    if let master = offices.first(where: { $0.is_default }) {
+                        Section {
+                            Text("Gán \"\(master.name)\" cho toàn bộ nhân viên. Mọi gán trụ sở cũ sẽ bị thay thế.")
+                        }
+                    }
+                    Section("Xác nhận") {
+                        TextField("Gõ 123 để xác nhận", text: $resetCode)
+                            .keyboardType(.numberPad)
+                            .textInputAutocapitalization(.never)
+                    }
+                    if let errorMessage {
+                        Text(errorMessage).foregroundStyle(.red)
+                    }
+                }
+                .navigationTitle("Reset trụ sở")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Huỷ") { showResetConfirm = false }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Reset") {
+                            Task { await applyDefaultAll() }
+                        }
+                        .disabled(resetCode != "123" || isResetting)
+                        .foregroundStyle(.red)
+                    }
+                }
+            }
+            .presentationDetents([.medium])
+        }
         .refreshable { await load() }
         .task { await load() }
         .overlay {
@@ -77,6 +128,31 @@ struct OfficeManageView: View {
                 offices = try await APIClient.shared.superListOffices(companyId: companyId)
             }
             errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func applyDefaultAll() async {
+        guard resetCode == "123" else {
+            errorMessage = "Gõ đúng 123 để xác nhận"
+            return
+        }
+        isResetting = true
+        defer { isResetting = false }
+        do {
+            let result: ApplyDefaultOfficeResult
+            switch mode {
+            case .companyAdmin:
+                result = try await APIClient.shared.companyApplyDefaultOfficeAll()
+            case .superAdmin(let companyId):
+                result = try await APIClient.shared.superApplyDefaultOfficeAll(companyId: companyId)
+            }
+            resetMessage = "Đã gán \"\(result.office.name)\" cho \(result.members_updated) nhân sự"
+            errorMessage = nil
+            showResetConfirm = false
+            resetCode = ""
+            await load()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -178,6 +254,9 @@ struct OfficeDetailView: View {
     @State private var ips: [OfficeIpNetwork] = []
     @State private var newNetwork = ""
     @State private var newLabel = ""
+    @State private var currentIp: String?
+    @State private var currentIpPublic = false
+    @State private var currentIpLoading = false
     @State private var error: String?
     @State private var message: String?
     @State private var loading = false
@@ -210,6 +289,34 @@ struct OfficeDetailView: View {
                         .buttonStyle(.borderless)
                     }
                 }
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("IP hiện tại")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Làm mới") { Task { await loadCurrentIp() } }
+                            .font(.caption)
+                            .disabled(currentIpLoading)
+                    }
+                    if currentIpLoading && currentIp == nil {
+                        ProgressView()
+                    } else if let currentIp, !currentIp.isEmpty {
+                        Text(currentIp)
+                            .font(.body.monospaced())
+                        if !currentIpPublic {
+                            Text("IP nội bộ/local — khi deploy server thật sẽ là IP WAN văn phòng.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        Button("Thêm IP hiện tại") {
+                            Task { await addCurrentIp() }
+                        }
+                        .disabled(ips.contains { $0.network == currentIp })
+                    } else {
+                        Text("Không lấy được IP").foregroundStyle(.secondary)
+                    }
+                }
                 TextField("IP hoặc CIDR", text: $newNetwork)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -234,7 +341,10 @@ struct OfficeDetailView: View {
             }
         }
         .navigationTitle(office?.name ?? "Trụ sở")
-        .task { await load() }
+        .task {
+            await load()
+            await loadCurrentIp()
+        }
     }
 
     private func load() async {
@@ -257,6 +367,42 @@ struct OfficeDetailView: View {
         } catch {
             self.error = error.localizedDescription
         }
+    }
+
+    private func loadCurrentIp() async {
+        currentIpLoading = true
+        defer { currentIpLoading = false }
+        do {
+            let data = try await APIClient.shared.myIp()
+            if data.is_public, !data.ip.isEmpty {
+                currentIp = data.ip
+                currentIpPublic = true
+            } else {
+                // Dev/local: backend thấy 127.0.0.1 → lấy WAN qua ipify
+                let fallback = try await APIClient.shared.fetchPublicIpFallback()
+                currentIp = fallback
+                currentIpPublic = true
+            }
+        } catch {
+            do {
+                currentIp = try await APIClient.shared.fetchPublicIpFallback()
+                currentIpPublic = true
+            } catch {
+                currentIp = nil
+                currentIpPublic = false
+            }
+        }
+    }
+
+    private func addCurrentIp() async {
+        guard let ip = currentIp?.trimmingCharacters(in: .whitespacesAndNewlines), !ip.isEmpty else {
+            return
+        }
+        newNetwork = ip
+        if newLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            newLabel = "IP hiện tại"
+        }
+        await addIp()
     }
 
     private func save() async {

@@ -61,6 +61,11 @@ struct MeData: Decodable {
     let company: CompanyBrief?
 }
 
+struct MyIpData: Decodable {
+    let ip: String
+    let is_public: Bool
+}
+
 // MARK: - Company admin models
 
 struct Company: Codable, Identifiable, Hashable {
@@ -226,6 +231,13 @@ struct AccountOfficesResult: Decodable {
     let company_id: Int
     let office_ids: [Int]
     let offices: [CompanyOffice]?
+    let auto_assigned_default: Bool?
+}
+
+struct ApplyDefaultOfficeResult: Decodable {
+    let office_id: Int
+    let office: CompanyOffice
+    let members_updated: Int
 }
 
 struct DeleteIpResult: Decodable {

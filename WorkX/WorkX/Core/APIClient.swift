@@ -99,6 +99,23 @@ final class APIClient {
         try await request(path: "/api/v1/auth/me")
     }
 
+    /// IP external như backend nhìn thấy (dùng thêm nhanh IP trụ sở).
+    func myIp() async throws -> MyIpData {
+        try await request(path: "/api/v1/auth/my-ip")
+    }
+
+    /// Fallback khi backend trả IP private/loopback (dev local).
+    func fetchPublicIpFallback() async throws -> String {
+        guard let url = URL(string: "https://api.ipify.org") else {
+            throw APIError.invalidURL
+        }
+        let (data, _) = try await URLSession.shared.data(from: url)
+        let ip = String(data: data, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !ip.isEmpty else { throw APIError.server("Không lấy được IP") }
+        return ip
+    }
+
     // MARK: Super — companies
 
     func listCompanies(q: String? = nil) async throws -> PagedData<Company> {
@@ -267,6 +284,10 @@ final class APIClient {
         try await request(path: "/api/v1/company/offices/\(id)/deactivate", method: "POST")
     }
 
+    func companyApplyDefaultOfficeAll() async throws -> ApplyDefaultOfficeResult {
+        try await request(path: "/api/v1/company/offices/apply-default-all", method: "POST")
+    }
+
     func companyAddOfficeIp(officeId: Int, body: IpNetworkRequest) async throws -> OfficeIpNetwork {
         try await request(path: "/api/v1/company/offices/\(officeId)/ips", method: "POST", body: body)
     }
@@ -298,6 +319,13 @@ final class APIClient {
 
     func superListOffices(companyId: Int) async throws -> [CompanyOffice] {
         try await request(path: "/api/v1/super/companies/\(companyId)/offices")
+    }
+
+    func superApplyDefaultOfficeAll(companyId: Int) async throws -> ApplyDefaultOfficeResult {
+        try await request(
+            path: "/api/v1/super/companies/\(companyId)/offices/apply-default-all",
+            method: "POST"
+        )
     }
 
     func superGetOffice(companyId: Int, officeId: Int) async throws -> CompanyOffice {
