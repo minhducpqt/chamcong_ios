@@ -132,3 +132,43 @@ enum AppRole {
     static let companyAdmin = "company_admin"
     static let staff = "staff"
 }
+
+// MARK: - Work shifts
+
+struct WorkShift: Codable, Identifiable, Hashable {
+    let id: Int
+    let company_id: Int?
+    let code: String
+    let name: String
+    let start_time: String
+    let end_time: String
+    let is_system: Bool
+    let is_active: Bool
+    let crosses_midnight: Bool?
+
+    var timeLabel: String {
+        let s = String(start_time.prefix(5))
+        let e = String(end_time.prefix(5))
+        return "\(s)–\(e)"
+    }
+}
+
+struct WorkShiftCreateRequest: Encodable {
+    let code: String
+    let name: String
+    let start_time: String
+    let end_time: String
+}
+
+struct ApplyShiftAllRequest: Encodable {
+    let shift_id: Int
+    let from_date: String
+    let note: String?
+}
+
+struct ApplyShiftAllResult: Decodable {
+    let shift_id: Int
+    let from_date: String
+    let members_assigned: Int?
+    let previous_assignments_closed: Int?
+}

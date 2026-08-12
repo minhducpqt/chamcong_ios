@@ -26,6 +26,11 @@ struct CompanyDetailView: View {
                     LabeledContent("Số TK", value: "\(company.account_count ?? accounts.count)")
                 }
                 Section("Thao tác cty") {
+                    NavigationLink {
+                        ShiftManageView(mode: .superAdmin(companyId: companyId))
+                    } label: {
+                        Label("Quản lý ca làm việc", systemImage: "clock")
+                    }
                     Button(company.is_active ? "Disable công ty" : "Enable công ty") {
                         Task { await toggleCompany(enable: !company.is_active) }
                     }

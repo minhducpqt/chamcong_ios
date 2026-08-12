@@ -200,6 +200,50 @@ final class APIClient {
     func companyMe() async throws -> CompanyDetail {
         try await request(path: "/api/v1/company/me")
     }
+
+    // MARK: Company admin — shifts
+
+    func companyListShifts() async throws -> [WorkShift] {
+        try await request(path: "/api/v1/company/shifts")
+    }
+
+    func companyListCustomShifts() async throws -> [WorkShift] {
+        try await request(path: "/api/v1/company/shifts/custom")
+    }
+
+    func companyCreateShift(_ body: WorkShiftCreateRequest) async throws -> WorkShift {
+        try await request(path: "/api/v1/company/shifts", method: "POST", body: body)
+    }
+
+    func companyApplyShiftAll(_ body: ApplyShiftAllRequest) async throws -> ApplyShiftAllResult {
+        try await request(path: "/api/v1/company/shifts/apply-all", method: "POST", body: body)
+    }
+
+    // MARK: Super — shifts for a company
+
+    func superListShifts(companyId: Int) async throws -> [WorkShift] {
+        try await request(path: "/api/v1/super/companies/\(companyId)/shifts")
+    }
+
+    func superListCustomShifts(companyId: Int) async throws -> [WorkShift] {
+        try await request(path: "/api/v1/super/companies/\(companyId)/shifts/custom")
+    }
+
+    func superCreateShift(companyId: Int, body: WorkShiftCreateRequest) async throws -> WorkShift {
+        try await request(
+            path: "/api/v1/super/companies/\(companyId)/shifts",
+            method: "POST",
+            body: body
+        )
+    }
+
+    func superApplyShiftAll(companyId: Int, body: ApplyShiftAllRequest) async throws -> ApplyShiftAllResult {
+        try await request(
+            path: "/api/v1/super/companies/\(companyId)/shifts/apply-all",
+            method: "POST",
+            body: body
+        )
+    }
 }
 
 private struct DetailError: Decodable {

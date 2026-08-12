@@ -18,7 +18,9 @@ struct CompanyListView: View {
                 Text(errorMessage).foregroundStyle(.red)
             }
             ForEach(items) { c in
-                NavigationLink(value: c) {
+                NavigationLink {
+                    CompanyDetailView(companyId: c.id)
+                } label: {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Text(c.name).font(.headline)
@@ -35,9 +37,6 @@ struct CompanyListView: View {
             }
         }
         .navigationTitle("Công ty")
-        .navigationDestination(for: Company.self) { c in
-            CompanyDetailView(companyId: c.id)
-        }
         .searchable(text: $query, prompt: "Tìm mã / tên")
         .onChange(of: query) { _, _ in
             Task { await load() }
