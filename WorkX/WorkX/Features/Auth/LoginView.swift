@@ -7,8 +7,10 @@ import SwiftUI
 
 struct LoginView: View {
     @EnvironmentObject private var session: SessionStore
-    @State private var username = "kinhdo.trangnt"
-    @State private var password = "User@123"
+    @State private var username = ""
+    @State private var password = ""
+    @State private var savedAccounts: [SavedAccount] = []
+    @State private var environment = APIConfig.environment
     @FocusState private var focused: Field?
 
     private enum Field { case username, password }
@@ -26,7 +28,7 @@ struct LoginView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 24)
                 .padding(.top, 48)
-                .padding(.bottom, 32)
+                .padding(.bottom, 24)
 
                 VStack(spacing: 16) {
                     TextField("Tài khoản (vd: kinhdo.trangnt)", text: $username)
@@ -72,14 +74,117 @@ struct LoginView: View {
                 }
                 .padding(.horizontal, 24)
 
+                if !savedAccounts.isEmpty {
+                    savedAccountsSection
+                } else {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Tài khoản đã lưu")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                        Text("Đăng nhập thành công sẽ lưu username và mật khẩu (tối đa 10) để chọn nhanh lần sau.")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 20)
+                }
+
                 Spacer()
 
-                Text("Server: \(APIConfig.baseURL.absoluteString)")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                    .padding(.bottom, 16)
+                VStack(spacing: 10) {
+                    Picker(
+                        "Môi trường",
+                        selection: Binding(
+                            get: { environment },
+                            set: {
+                                environment = $0
+                                APIConfig.environment = $0
+                            }
+                        )
+                    ) {
+                        ForEach(AppEnvironment.allCases) { env in
+                            Text(env.label).tag(env)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    Text(APIConfig.baseURL.absoluteString)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 16)
             }
             .navigationBarHidden(true)
+            .onAppear {
+                refreshSavedAccounts()
+                applyDefaultCredentialsIfNeeded()
+            }
+            .onChange(of: session.isLoggedIn) { _, loggedIn in
+                if !loggedIn {
+                    refreshSavedAccounts()
+                }
+            }
+        }
+    }
+
+    private var savedAccountsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Tài khoản đã lưu")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 24)
+
+            VStack(spacing: 0) {
+                ForEach(savedAccounts) { account in
+                    Button {
+                        username = account.username
+                        password = account.password
+                        focused = nil
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(account.username)
+                                    .foregroundStyle(.primary)
+                                if !account.maskedHint.isEmpty {
+                                    Text(account.maskedHint)
+                                        .font(.caption2)
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                    }
+                    .buttonStyle(.plain)
+
+                    if account.id != savedAccounts.last?.id {
+                        Divider().padding(.leading, 16)
+                    }
+                }
+            }
+            .background(Color(.secondarySystemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(.horizontal, 24)
+        }
+        .padding(.top, 20)
+    }
+
+    private func refreshSavedAccounts() {
+        savedAccounts = SavedAccountsStore.load()
+    }
+
+    private func applyDefaultCredentialsIfNeeded() {
+        guard username.isEmpty && password.isEmpty else { return }
+        if savedAccounts.isEmpty && !APIConfig.isProduction {
+            username = "kinhdo.trangnt"
+            password = "User@123"
         }
     }
 }

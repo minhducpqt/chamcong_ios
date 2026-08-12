@@ -168,6 +168,13 @@ final class APIClient {
         try await request(path: "/api/v1/super/accounts/\(id)/disable", method: "POST")
     }
 
+    func superDeleteAccount(id: Int) async throws {
+        let _: DeleteAccountResult = try await request(
+            path: "/api/v1/super/accounts/\(id)",
+            method: "DELETE"
+        )
+    }
+
     func superChangePassword(id: Int, newPassword: String) async throws -> Account {
         try await request(
             path: "/api/v1/super/accounts/\(id)/change-password",
@@ -200,6 +207,13 @@ final class APIClient {
 
     func companyDisableAccount(id: Int) async throws -> Account {
         try await request(path: "/api/v1/company/accounts/\(id)/disable", method: "POST")
+    }
+
+    func companyDeleteAccount(id: Int) async throws {
+        let _: DeleteAccountResult = try await request(
+            path: "/api/v1/company/accounts/\(id)",
+            method: "DELETE"
+        )
     }
 
     func companyChangePassword(id: Int, newPassword: String) async throws -> Account {

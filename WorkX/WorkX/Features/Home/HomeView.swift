@@ -28,11 +28,8 @@ struct HomeView: View {
 
                 Section("Quản lý") {
                     if session.user?.role == AppRole.superAdmin {
-                        NavigationLink {
-                            CompanyListView()
-                        } label: {
-                            Label("Quản lý công ty & tài khoản", systemImage: "building.2")
-                        }
+                        Text("Chọn tab Công ty để xem danh sách và theo dõi chấm công từng công ty.")
+                            .foregroundStyle(.secondary)
                     } else if session.user?.role == AppRole.companyAdmin {
                         NavigationLink {
                             CompanyAccountsView()
@@ -63,11 +60,13 @@ struct HomeView: View {
                     }
                 }
             }
-            .navigationTitle("Tài khoản")
+            .navigationTitle(session.user?.role == AppRole.superAdmin ? "Cài đặt" : "Tài khoản")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Đăng xuất", role: .destructive) {
-                        session.logout()
+                if session.user?.role != AppRole.staff || APIConfig.showsLogoutForStaff {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Đăng xuất", role: .destructive) {
+                            session.logout()
+                        }
                     }
                 }
             }

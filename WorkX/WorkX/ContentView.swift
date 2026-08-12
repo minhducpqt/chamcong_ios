@@ -39,6 +39,19 @@ struct ContentView: View {
                                 Label("Tài khoản", systemImage: "person.crop.circle")
                             }
                     }
+                } else if session.user?.role == AppRole.superAdmin {
+                    TabView {
+                        NavigationStack {
+                            CompanyListView()
+                        }
+                        .tabItem {
+                            Label("Công ty", systemImage: "building.2")
+                        }
+                        HomeView()
+                            .tabItem {
+                                Label("Cài đặt", systemImage: "gearshape.fill")
+                            }
+                    }
                 } else {
                     HomeView()
                 }

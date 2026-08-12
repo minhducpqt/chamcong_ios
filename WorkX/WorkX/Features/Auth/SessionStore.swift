@@ -22,15 +22,17 @@ final class SessionStore: ObservableObject {
         errorMessage = nil
         isLoading = true
         defer { isLoading = false }
+        let trimmed = username.trimmingCharacters(in: .whitespacesAndNewlines)
         do {
             let data = try await APIClient.shared.login(
-                username: username.trimmingCharacters(in: .whitespacesAndNewlines),
+                username: trimmed,
                 password: password
             )
             APIClient.shared.accessToken = data.token.access_token
             user = data.user
             company = data.company
             isLoggedIn = true
+            SavedAccountsStore.upsert(username: trimmed, password: password)
         } catch {
             errorMessage = error.localizedDescription
             isLoggedIn = false

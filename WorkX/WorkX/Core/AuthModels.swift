@@ -245,6 +245,11 @@ struct DeleteIpResult: Decodable {
     let id: Int?
 }
 
+struct DeleteAccountResult: Decodable {
+    let deleted: Bool?
+    let id: Int?
+}
+
 // MARK: - Attendance
 
 struct AttendanceCheckRequest: Encodable {

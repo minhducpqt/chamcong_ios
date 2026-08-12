@@ -12,6 +12,7 @@ enum AdminAttendanceMode: Hashable {
 
 struct AdminOverviewView: View {
     let mode: AdminAttendanceMode
+    var navigationTitle: String = "Tổng quan"
 
     @State private var overview: AttendanceOverviewData?
     @State private var loading = false
@@ -41,7 +42,7 @@ struct AdminOverviewView: View {
                 ContentUnavailableView("Chưa có dữ liệu", systemImage: "building.2")
             }
         }
-        .navigationTitle("Tổng quan")
+        .navigationTitle(navigationTitle)
         .refreshable { await load() }
         .task { await load() }
     }

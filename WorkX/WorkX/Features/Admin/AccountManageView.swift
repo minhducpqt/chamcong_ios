@@ -11,6 +11,8 @@ enum AccountActionMode {
 }
 
 struct AccountManageView: View {
+    @Environment(\.dismiss) private var dismiss
+
     let account: Account
     let mode: AccountActionMode
     var onChanged: () -> Void
@@ -24,6 +26,8 @@ struct AccountManageView: View {
     @State private var message: String?
     @State private var error: String?
     @State private var loading = false
+    @State private var showDeleteConfirm = false
+    @State private var deleteConfirmText = ""
 
     init(account: Account, mode: AccountActionMode, onChanged: @escaping () -> Void) {
         self.account = account
@@ -78,6 +82,10 @@ struct AccountManageView: View {
                     Button("Enable tài khoản") {
                         Task { await setActive(true) }
                     }
+                    Button("Xóa vĩnh viễn", role: .destructive) {
+                        deleteConfirmText = ""
+                        showDeleteConfirm = true
+                    }
                 }
             }
             if let message {
@@ -88,6 +96,20 @@ struct AccountManageView: View {
             }
         }
         .navigationTitle(current.username)
+        .sheet(isPresented: $showDeleteConfirm) {
+            DeleteAccountConfirmSheet(
+                username: current.username,
+                confirmText: $deleteConfirmText,
+                isDeleting: loading,
+                onCancel: {
+                    showDeleteConfirm = false
+                    deleteConfirmText = ""
+                },
+                onConfirm: {
+                    Task { await deleteAccount() }
+                }
+            )
+        }
     }
 
     private func saveInfo() async {
@@ -152,5 +174,64 @@ struct AccountManageView: View {
         } catch {
             self.error = error.localizedDescription
         }
+    }
+
+    private func deleteAccount() async {
+        loading = true
+        defer { loading = false }
+        do {
+            switch mode {
+            case .superAdmin:
+                try await APIClient.shared.superDeleteAccount(id: current.id)
+            case .companyAdmin:
+                try await APIClient.shared.companyDeleteAccount(id: current.id)
+            }
+            showDeleteConfirm = false
+            deleteConfirmText = ""
+            onChanged()
+            dismiss()
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+}
+
+private struct DeleteAccountConfirmSheet: View {
+    let username: String
+    @Binding var confirmText: String
+    let isDeleting: Bool
+    let onCancel: () -> Void
+    let onConfirm: () -> Void
+
+    private var canConfirm: Bool {
+        confirmText.trimmingCharacters(in: .whitespacesAndNewlines) == "xoa"
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Text("Tài khoản \(username) sẽ bị xóa vĩnh viễn. Thao tác không thể hoàn tác.")
+                }
+                Section("Xác nhận") {
+                    TextField("Nhập xoa", text: $confirmText)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .keyboardType(.asciiCapable)
+                }
+            }
+            .navigationTitle("Xóa tài khoản")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Huỷ", action: onCancel)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Xóa", role: .destructive, action: onConfirm)
+                        .disabled(!canConfirm || isDeleting)
+                }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }
