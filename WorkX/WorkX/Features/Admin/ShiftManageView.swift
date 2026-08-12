@@ -51,7 +51,7 @@ struct ShiftManageView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Button("Tạo ca custom") { showCreate = true }
-                    Button("Apply toàn công ty") { showApply = true }
+                    Button("Áp dụng toàn công ty") { showApply = true }
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }
@@ -121,7 +121,7 @@ private struct ShiftRow: View {
                 Text(shift.name).font(.headline)
                 Spacer()
                 if !shift.is_active {
-                    Text("Off").font(.caption2).foregroundStyle(.secondary)
+                    Text("Tắt").font(.caption2).foregroundStyle(.secondary)
                 }
             }
             Text("\(shift.code) · \(shift.timeLabel)")
@@ -138,8 +138,8 @@ private struct CreateShiftSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var code = ""
     @State private var name = ""
-    @State private var start = "08:00"
-    @State private var end = "17:00"
+    @State private var startTime = WorkXTimeFormat.date(from: "08:00")
+    @State private var endTime = WorkXTimeFormat.date(from: "17:00")
     @State private var error: String?
     @State private var loading = false
 
@@ -150,10 +150,8 @@ private struct CreateShiftSheet: View {
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                 TextField("Tên ca", text: $name)
-                TextField("Bắt đầu HH:mm", text: $start)
-                    .textInputAutocapitalization(.never)
-                TextField("Kết thúc HH:mm", text: $end)
-                    .textInputAutocapitalization(.never)
+                DatePicker("Bắt đầu", selection: $startTime, displayedComponents: .hourAndMinute)
+                DatePicker("Kết thúc", selection: $endTime, displayedComponents: .hourAndMinute)
             }
             if let error {
                 Text(error).foregroundStyle(.red)
@@ -177,8 +175,8 @@ private struct CreateShiftSheet: View {
         let body = WorkShiftCreateRequest(
             code: code.trimmingCharacters(in: .whitespacesAndNewlines),
             name: name.trimmingCharacters(in: .whitespacesAndNewlines),
-            start_time: start.trimmingCharacters(in: .whitespacesAndNewlines),
-            end_time: end.trimmingCharacters(in: .whitespacesAndNewlines)
+            start_time: WorkXTimeFormat.timeString(from: startTime),
+            end_time: WorkXTimeFormat.timeString(from: endTime)
         )
         do {
             switch mode {
@@ -230,13 +228,13 @@ private struct ApplyShiftAllSheet: View {
                 Text(error).foregroundStyle(.red)
             }
         }
-        .navigationTitle("Apply toàn cty")
+        .navigationTitle("Áp dụng toàn công ty")
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Huỷ") { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Apply") { Task { await submit() } }
+                Button("Áp dụng") { Task { await submit() } }
                     .disabled(loading || selectedId == nil)
             }
         }

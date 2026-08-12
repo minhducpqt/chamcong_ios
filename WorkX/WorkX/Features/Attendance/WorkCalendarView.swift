@@ -44,7 +44,7 @@ struct WorkCalendarView: View {
             } header: {
                 Text("Preset lịch làm việc")
             } footer: {
-                Text("Weekday: Thứ 2=0 … CN=6 (Python).")
+                Text("Chọn các ngày trong tuần áp dụng lịch làm việc mặc định.")
             }
 
             if let message {

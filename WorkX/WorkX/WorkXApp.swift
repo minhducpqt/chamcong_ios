@@ -13,6 +13,7 @@ struct WorkXApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(session)
+                .tint(WorkXTheme.brandBlue)
         }
     }
 }

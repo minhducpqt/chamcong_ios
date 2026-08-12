@@ -21,7 +21,7 @@ struct ContentView: View {
                         }
                         CheckView()
                             .tabItem {
-                                Label("Check", systemImage: "hand.tap.fill")
+                                Label("Chấm công", systemImage: "hand.tap.fill")
                             }
                         HomeView()
                             .tabItem {

@@ -25,7 +25,7 @@ struct CompanyListView: View {
                         HStack {
                             Text(c.name).font(.headline)
                             Spacer()
-                            Text(c.is_active ? "Active" : "Off")
+                            Text(c.is_active ? "Hoạt động" : "Tắt")
                                 .font(.caption)
                                 .foregroundStyle(c.is_active ? .green : .secondary)
                         }

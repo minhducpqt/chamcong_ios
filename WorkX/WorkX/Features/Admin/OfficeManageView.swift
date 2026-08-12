@@ -176,7 +176,7 @@ private struct OfficeRow: View {
                 }
                 Spacer()
                 if !office.is_active {
-                    Text("Off").font(.caption2).foregroundStyle(.secondary)
+                    Text("Tắt").font(.caption2).foregroundStyle(.secondary)
                 }
             }
             Text("\(office.ipCount) IP · \(office.address ?? "Không có địa chỉ")")

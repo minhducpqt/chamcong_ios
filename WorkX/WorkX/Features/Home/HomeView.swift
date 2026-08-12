@@ -15,7 +15,7 @@ struct HomeView: View {
                     Section("Tài khoản của bạn") {
                         LabeledContent("Họ tên", value: user.full_name)
                         LabeledContent("Username", value: user.username)
-                        LabeledContent("Role", value: user.roleLabel)
+                        LabeledContent("Vai trò", value: user.roleLabel)
                     }
                 }
 

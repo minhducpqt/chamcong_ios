@@ -22,7 +22,7 @@ struct CompanyDetailView: View {
                     LabeledContent("Tên", value: company.name)
                     if let a = company.address { LabeledContent("Địa chỉ", value: a) }
                     if let p = company.phone { LabeledContent("SĐT", value: p) }
-                    LabeledContent("Trạng thái", value: company.is_active ? "Active" : "Disabled")
+                    LabeledContent("Trạng thái", value: company.is_active ? "Hoạt động" : "Đã tắt")
                     LabeledContent("Số TK", value: "\(company.account_count ?? accounts.count)")
                 }
                 Section("Thao tác cty") {
@@ -125,7 +125,7 @@ struct AccountRow: View {
             HStack {
                 Text(account.full_name).font(.headline)
                 Spacer()
-                Text(account.is_active ? "On" : "Off")
+                Text(account.is_active ? "Hoạt động" : "Tắt")
                     .font(.caption2)
                     .foregroundStyle(account.is_active ? .green : .secondary)
             }

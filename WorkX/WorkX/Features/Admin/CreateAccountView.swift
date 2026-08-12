@@ -37,7 +37,7 @@ struct CreateAccountView: View {
                     .foregroundStyle(.secondary)
                 TextField("Họ tên", text: $fullName)
                 SecureField("Mật khẩu", text: $password)
-                Picker("Role", selection: $role) {
+                Picker("Vai trò", selection: $role) {
                     ForEach(roles, id: \.self) { r in
                         Text(r == "staff" ? "Nhân viên" : "Admin cty").tag(r)
                     }

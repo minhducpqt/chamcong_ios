@@ -48,11 +48,11 @@ struct AccountManageView: View {
                 TextField("Email", text: $email)
                     .textInputAutocapitalization(.never)
                 TextField("SĐT", text: $phone)
-                Picker("Role", selection: $role) {
+                Picker("Vai trò", selection: $role) {
                     Text("Nhân viên").tag("staff")
                     Text("Admin cty").tag("company_admin")
                 }
-                LabeledContent("Trạng thái", value: current.is_active ? "Active" : "Disabled")
+                LabeledContent("Trạng thái", value: current.is_active ? "Hoạt động" : "Đã tắt")
             }
             Section {
                 Button("Lưu thông tin") { Task { await saveInfo() } }

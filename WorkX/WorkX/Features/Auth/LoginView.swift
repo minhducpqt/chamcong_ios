@@ -21,6 +21,7 @@ struct LoginView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("WorkX")
                         .font(.system(size: 36, weight: .bold, design: .rounded))
+                        .foregroundStyle(WorkXTheme.brandBlue)
                     Text("Đăng nhập chấm công")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -92,30 +93,32 @@ struct LoginView: View {
 
                 Spacer()
 
-                VStack(spacing: 10) {
-                    Picker(
-                        "Môi trường",
-                        selection: Binding(
-                            get: { environment },
-                            set: {
-                                environment = $0
-                                APIConfig.environment = $0
+                if !APIConfig.isProduction {
+                    VStack(spacing: 10) {
+                        Picker(
+                            "Môi trường",
+                            selection: Binding(
+                                get: { environment },
+                                set: {
+                                    environment = $0
+                                    APIConfig.environment = $0
+                                }
+                            )
+                        ) {
+                            ForEach(AppEnvironment.allCases) { env in
+                                Text(env.label).tag(env)
                             }
-                        )
-                    ) {
-                        ForEach(AppEnvironment.allCases) { env in
-                            Text(env.label).tag(env)
                         }
-                    }
-                    .pickerStyle(.segmented)
+                        .pickerStyle(.segmented)
 
-                    Text(APIConfig.baseURL.absoluteString)
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                        .multilineTextAlignment(.center)
+                        Text(APIConfig.baseURL.absoluteString)
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 16)
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 16)
             }
             .navigationBarHidden(true)
             .onAppear {
