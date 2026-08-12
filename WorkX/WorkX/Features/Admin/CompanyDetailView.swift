@@ -13,6 +13,8 @@ struct CompanyDetailView: View {
     @State private var errorMessage: String?
     @State private var showCreateAccount = false
     @State private var showPurgeConfirm = false
+    @State private var showToggleConfirm = false
+    @State private var pendingToggleEnable = true
     @State private var toast: String?
 
     var body: some View {
@@ -38,7 +40,8 @@ struct CompanyDetailView: View {
                         Label("Quản lý trụ sở", systemImage: "building")
                     }
                     Button(company.is_active ? "Disable công ty" : "Enable công ty") {
-                        Task { await toggleCompany(enable: !company.is_active) }
+                        pendingToggleEnable = !company.is_active
+                        showToggleConfirm = true
                     }
                     .foregroundStyle(company.is_active ? .red : .green)
 
@@ -89,6 +92,27 @@ struct CompanyDetailView: View {
                 toast = "Đã xoá \($0) tài khoản"
                 Task { await load() }
             }
+        }
+        .alert(
+            "Xác nhận thao tác",
+            isPresented: $showToggleConfirm
+        ) {
+            Button("Huỷ", role: .cancel) {}
+            if pendingToggleEnable {
+                Button("Bật công ty") {
+                    Task { await toggleCompany(enable: pendingToggleEnable) }
+                }
+            } else {
+                Button("Tắt công ty", role: .destructive) {
+                    Task { await toggleCompany(enable: pendingToggleEnable) }
+                }
+            }
+        } message: {
+            Text(
+                pendingToggleEnable
+                    ? "Bật công ty này để cho phép sử dụng lại."
+                    : "Tắt công ty này. Thao tác này ảnh hưởng đến dữ liệu chấm công của công ty."
+            )
         }
         .refreshable { await load() }
         .task { await load() }

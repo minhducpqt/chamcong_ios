@@ -28,6 +28,8 @@ struct AccountManageView: View {
     @State private var loading = false
     @State private var showDeleteConfirm = false
     @State private var deleteConfirmText = ""
+    @State private var showActiveToggleConfirm = false
+    @State private var pendingActiveEnable = true
 
     init(account: Account, mode: AccountActionMode, onChanged: @escaping () -> Void) {
         self.account = account
@@ -76,11 +78,13 @@ struct AccountManageView: View {
             Section("Trạng thái TK") {
                 if current.is_active {
                     Button("Disable tài khoản", role: .destructive) {
-                        Task { await setActive(false) }
+                        pendingActiveEnable = false
+                        showActiveToggleConfirm = true
                     }
                 } else {
                     Button("Enable tài khoản") {
-                        Task { await setActive(true) }
+                        pendingActiveEnable = true
+                        showActiveToggleConfirm = true
                     }
                     Button("Xóa vĩnh viễn", role: .destructive) {
                         deleteConfirmText = ""
@@ -108,6 +112,27 @@ struct AccountManageView: View {
                 onConfirm: {
                     Task { await deleteAccount() }
                 }
+            )
+        }
+        .alert(
+            "Xác nhận thao tác",
+            isPresented: $showActiveToggleConfirm
+        ) {
+            Button("Huỷ", role: .cancel) {}
+            if pendingActiveEnable {
+                Button("Bật tài khoản") {
+                    Task { await setActive(pendingActiveEnable) }
+                }
+            } else {
+                Button("Tắt tài khoản", role: .destructive) {
+                    Task { await setActive(pendingActiveEnable) }
+                }
+            }
+        } message: {
+            Text(
+                pendingActiveEnable
+                    ? "Bật tài khoản này. Tài khoản sẽ có thể đăng nhập lại."
+                    : "Tắt tài khoản này. Tài khoản sẽ không thể đăng nhập."
             )
         }
     }
