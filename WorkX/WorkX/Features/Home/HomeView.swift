@@ -49,13 +49,21 @@ struct HomeView: View {
                         } label: {
                             Label("Quản lý trụ sở", systemImage: "building")
                         }
+                        NavigationLink {
+                            WorkCalendarView()
+                        } label: {
+                            Label("Lịch làm việc", systemImage: "calendar")
+                        }
+                    } else if session.user?.role == AppRole.staff {
+                        Text("Dùng tab Chấm công để check-in/out.")
+                            .foregroundStyle(.secondary)
                     } else {
                         Text("Nhân viên chưa có quyền quản trị.")
                             .foregroundStyle(.secondary)
                     }
                 }
             }
-            .navigationTitle("WorkX")
+            .navigationTitle("Tài khoản")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Đăng xuất", role: .destructive) {

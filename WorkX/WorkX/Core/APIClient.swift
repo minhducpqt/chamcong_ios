@@ -389,6 +389,32 @@ final class APIClient {
             body: SetAccountOfficesRequest(office_ids: officeIds)
         )
     }
+
+    // MARK: Attendance
+
+    func attendanceCheck(source: String) async throws -> AttendanceCheckData {
+        try await request(
+            path: "/api/v1/company/attendance/check",
+            method: "POST",
+            body: AttendanceCheckRequest(source: source)
+        )
+    }
+
+    func attendanceMe(days: Int = 30) async throws -> AttendanceHistoryData {
+        try await request(path: "/api/v1/company/attendance/me?days=\(days)")
+    }
+
+    func getWorkCalendar() async throws -> WorkCalendarData {
+        try await request(path: "/api/v1/company/work-calendar")
+    }
+
+    func putWorkCalendar(_ body: WorkCalendarUpdateRequest) async throws -> WorkCalendarData {
+        try await request(
+            path: "/api/v1/company/work-calendar",
+            method: "PUT",
+            body: body
+        )
+    }
 }
 
 private struct DetailError: Decodable {

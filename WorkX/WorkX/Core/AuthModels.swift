@@ -244,3 +244,98 @@ struct DeleteIpResult: Decodable {
     let deleted: Bool?
     let id: Int?
 }
+
+// MARK: - Attendance
+
+struct AttendanceCheckRequest: Encodable {
+    let source: String
+}
+
+struct AttendanceOfficeBrief: Codable, Hashable {
+    let id: Int
+    let name: String
+}
+
+struct AttendancePunch: Codable, Identifiable, Hashable {
+    let id: Int
+    let punched_at: String
+    let work_date: String
+    let client_ip: String?
+    let office_id: Int?
+    let is_valid: Bool
+    let source: String
+}
+
+struct DaySummary: Codable, Identifiable, Hashable {
+    let date: String
+    let weekday: Int
+    let weekday_label: String
+    let is_weekend: Bool
+    let is_off: Bool
+    let checkin_at: String?
+    let checkout_at: String?
+    let checkout_provisional: Bool
+    let late_minutes: Int
+    let early_minutes: Int
+    let severity: String
+    let office_name: String?
+    let shift_name: String?
+    let has_punch: Bool
+
+    var id: String { date }
+
+    var timeLabel: String {
+        let cin = Self.shortTime(checkin_at)
+        let cout = Self.shortTime(checkout_at)
+        if cin == nil && cout == nil { return "—" }
+        var out = "\(cin ?? "—") → \(cout ?? "—")"
+        if checkout_provisional { out += " (tạm)" }
+        return out
+    }
+
+    private static func shortTime(_ iso: String?) -> String? {
+        guard let iso, iso.count >= 16 else { return nil }
+        // 2026-08-12T08:05:00+07:00 → 08:05
+        let start = iso.index(iso.startIndex, offsetBy: 11)
+        let end = iso.index(start, offsetBy: 5)
+        return String(iso[start..<end])
+    }
+}
+
+struct MonthStats: Codable, Hashable {
+    let year: Int
+    let month: Int
+    let late_days: Int
+    let early_days: Int
+    let total_late_minutes: Int
+    let total_early_minutes: Int
+}
+
+struct AttendanceHistoryData: Codable {
+    let days: [DaySummary]
+    let month: MonthStats
+    let timezone: String
+}
+
+struct AttendanceCheckData: Codable {
+    let accepted: Bool
+    let reason: String?
+    let message: String?
+    let client_ip: String?
+    let office: AttendanceOfficeBrief?
+    let punch: AttendancePunch?
+    let today_summary: DaySummary?
+}
+
+struct WorkCalendarData: Codable, Hashable {
+    let preset: String
+    let off_weekdays: [Int]
+    let half_day_off: [String: String]
+    let weekday_convention: String?
+}
+
+struct WorkCalendarUpdateRequest: Encodable {
+    let preset: String
+    let off_weekdays: [Int]?
+    let half_day_off: [String: String]?
+}

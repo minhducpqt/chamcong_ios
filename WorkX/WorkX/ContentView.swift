@@ -11,7 +11,20 @@ struct ContentView: View {
     var body: some View {
         Group {
             if session.isLoggedIn {
-                HomeView()
+                if isCompanyUser {
+                    TabView {
+                        CheckView()
+                            .tabItem {
+                                Label("Chấm công", systemImage: "hand.tap.fill")
+                            }
+                        HomeView()
+                            .tabItem {
+                                Label("Tài khoản", systemImage: "person.crop.circle")
+                            }
+                    }
+                } else {
+                    HomeView()
+                }
             } else {
                 LoginView()
             }
@@ -19,6 +32,11 @@ struct ContentView: View {
         .task {
             await session.restoreSession()
         }
+    }
+
+    private var isCompanyUser: Bool {
+        let role = session.user?.role
+        return role == AppRole.companyAdmin || role == AppRole.staff
     }
 }
 
