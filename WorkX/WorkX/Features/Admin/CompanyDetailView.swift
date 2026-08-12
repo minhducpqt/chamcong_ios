@@ -31,6 +31,11 @@ struct CompanyDetailView: View {
                     } label: {
                         Label("Quản lý ca làm việc", systemImage: "clock")
                     }
+                    NavigationLink {
+                        OfficeManageView(mode: .superAdmin(companyId: companyId))
+                    } label: {
+                        Label("Quản lý trụ sở", systemImage: "building")
+                    }
                     Button(company.is_active ? "Disable công ty" : "Enable công ty") {
                         Task { await toggleCompany(enable: !company.is_active) }
                     }

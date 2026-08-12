@@ -244,6 +244,123 @@ final class APIClient {
             body: body
         )
     }
+
+    // MARK: Company admin — offices
+
+    func companyListOffices() async throws -> [CompanyOffice] {
+        try await request(path: "/api/v1/company/offices")
+    }
+
+    func companyGetOffice(id: Int) async throws -> CompanyOffice {
+        try await request(path: "/api/v1/company/offices/\(id)")
+    }
+
+    func companyCreateOffice(_ body: OfficeCreateRequest) async throws -> CompanyOffice {
+        try await request(path: "/api/v1/company/offices", method: "POST", body: body)
+    }
+
+    func companyUpdateOffice(id: Int, body: OfficeUpdateRequest) async throws -> CompanyOffice {
+        try await request(path: "/api/v1/company/offices/\(id)", method: "PATCH", body: body)
+    }
+
+    func companyDeactivateOffice(id: Int) async throws -> CompanyOffice {
+        try await request(path: "/api/v1/company/offices/\(id)/deactivate", method: "POST")
+    }
+
+    func companyAddOfficeIp(officeId: Int, body: IpNetworkRequest) async throws -> OfficeIpNetwork {
+        try await request(path: "/api/v1/company/offices/\(officeId)/ips", method: "POST", body: body)
+    }
+
+    func companyReplaceOfficeIps(officeId: Int, body: ReplaceIpsRequest) async throws -> [OfficeIpNetwork] {
+        try await request(path: "/api/v1/company/offices/\(officeId)/ips", method: "PUT", body: body)
+    }
+
+    func companyDeleteOfficeIp(officeId: Int, ipId: Int) async throws {
+        let _: DeleteIpResult = try await request(
+            path: "/api/v1/company/offices/\(officeId)/ips/\(ipId)",
+            method: "DELETE"
+        )
+    }
+
+    func companyGetAccountOffices(accountId: Int) async throws -> AccountOfficesResult {
+        try await request(path: "/api/v1/company/accounts/\(accountId)/offices")
+    }
+
+    func companySetAccountOffices(accountId: Int, officeIds: [Int]) async throws -> AccountOfficesResult {
+        try await request(
+            path: "/api/v1/company/accounts/\(accountId)/offices",
+            method: "PUT",
+            body: SetAccountOfficesRequest(office_ids: officeIds)
+        )
+    }
+
+    // MARK: Super — offices for a company
+
+    func superListOffices(companyId: Int) async throws -> [CompanyOffice] {
+        try await request(path: "/api/v1/super/companies/\(companyId)/offices")
+    }
+
+    func superGetOffice(companyId: Int, officeId: Int) async throws -> CompanyOffice {
+        try await request(path: "/api/v1/super/companies/\(companyId)/offices/\(officeId)")
+    }
+
+    func superCreateOffice(companyId: Int, body: OfficeCreateRequest) async throws -> CompanyOffice {
+        try await request(
+            path: "/api/v1/super/companies/\(companyId)/offices",
+            method: "POST",
+            body: body
+        )
+    }
+
+    func superUpdateOffice(companyId: Int, officeId: Int, body: OfficeUpdateRequest) async throws -> CompanyOffice {
+        try await request(
+            path: "/api/v1/super/companies/\(companyId)/offices/\(officeId)",
+            method: "PATCH",
+            body: body
+        )
+    }
+
+    func superDeactivateOffice(companyId: Int, officeId: Int) async throws -> CompanyOffice {
+        try await request(
+            path: "/api/v1/super/companies/\(companyId)/offices/\(officeId)/deactivate",
+            method: "POST"
+        )
+    }
+
+    func superAddOfficeIp(companyId: Int, officeId: Int, body: IpNetworkRequest) async throws -> OfficeIpNetwork {
+        try await request(
+            path: "/api/v1/super/companies/\(companyId)/offices/\(officeId)/ips",
+            method: "POST",
+            body: body
+        )
+    }
+
+    func superReplaceOfficeIps(companyId: Int, officeId: Int, body: ReplaceIpsRequest) async throws -> [OfficeIpNetwork] {
+        try await request(
+            path: "/api/v1/super/companies/\(companyId)/offices/\(officeId)/ips",
+            method: "PUT",
+            body: body
+        )
+    }
+
+    func superDeleteOfficeIp(companyId: Int, officeId: Int, ipId: Int) async throws {
+        let _: DeleteIpResult = try await request(
+            path: "/api/v1/super/companies/\(companyId)/offices/\(officeId)/ips/\(ipId)",
+            method: "DELETE"
+        )
+    }
+
+    func superGetAccountOffices(companyId: Int, accountId: Int) async throws -> AccountOfficesResult {
+        try await request(path: "/api/v1/super/companies/\(companyId)/accounts/\(accountId)/offices")
+    }
+
+    func superSetAccountOffices(companyId: Int, accountId: Int, officeIds: [Int]) async throws -> AccountOfficesResult {
+        try await request(
+            path: "/api/v1/super/companies/\(companyId)/accounts/\(accountId)/offices",
+            method: "PUT",
+            body: SetAccountOfficesRequest(office_ids: officeIds)
+        )
+    }
 }
 
 private struct DetailError: Decodable {

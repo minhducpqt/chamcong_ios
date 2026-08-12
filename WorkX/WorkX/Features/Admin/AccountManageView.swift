@@ -54,6 +54,16 @@ struct AccountManageView: View {
                 Button("Lưu thông tin") { Task { await saveInfo() } }
                     .disabled(loading)
             }
+            Section("Trụ sở") {
+                NavigationLink {
+                    OfficeAssignView(account: current, mode: mode) {
+                        message = "Đã gán trụ sở"
+                        error = nil
+                    }
+                } label: {
+                    Label("Gán trụ sở", systemImage: "building.2")
+                }
+            }
             Section("Mật khẩu") {
                 SecureField("Mật khẩu mới (min 6)", text: $newPassword)
                 Button("Đổi mật khẩu") { Task { await changePassword() } }

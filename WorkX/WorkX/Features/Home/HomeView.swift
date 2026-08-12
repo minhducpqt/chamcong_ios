@@ -44,6 +44,11 @@ struct HomeView: View {
                         } label: {
                             Label("Quản lý ca làm việc", systemImage: "clock")
                         }
+                        NavigationLink {
+                            OfficeManageView(mode: .companyAdmin)
+                        } label: {
+                            Label("Quản lý trụ sở", systemImage: "building")
+                        }
                     } else {
                         Text("Nhân viên chưa có quyền quản trị.")
                             .foregroundStyle(.secondary)
