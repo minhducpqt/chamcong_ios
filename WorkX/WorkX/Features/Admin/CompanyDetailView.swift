@@ -12,6 +12,7 @@ struct CompanyDetailView: View {
     @State private var accounts: [Account] = []
     @State private var errorMessage: String?
     @State private var showCreateAccount = false
+    @State private var showPurgeConfirm = false
     @State private var toast: String?
 
     var body: some View {
@@ -40,6 +41,10 @@ struct CompanyDetailView: View {
                         Task { await toggleCompany(enable: !company.is_active) }
                     }
                     .foregroundStyle(company.is_active ? .red : .green)
+
+                    Button("Xoá toàn bộ tài khoản", role: .destructive) {
+                        showPurgeConfirm = true
+                    }
                 }
             }
 
@@ -78,6 +83,13 @@ struct CompanyDetailView: View {
                 }
             }
         }
+        .sheet(isPresented: $showPurgeConfirm) {
+            PurgeCompanyAccountsSheet(companyId: companyId) {
+                showPurgeConfirm = false
+                toast = "Đã xoá \($0) tài khoản"
+                Task { await load() }
+            }
+        }
         .refreshable { await load() }
         .task { await load() }
         .overlay(alignment: .bottom) {
@@ -113,6 +125,84 @@ struct CompanyDetailView: View {
             await load()
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+}
+
+private struct PurgeCompanyAccountsSheet: View {
+    let companyId: Int
+    var onPurged: (Int) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var confirmText = ""
+    @State private var loading = false
+    @State private var error: String?
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.red)
+
+                Text("Xoá toàn bộ tài khoản")
+                    .font(.title2.bold())
+
+                Text("Thao tác này sẽ xoá vĩnh viễn tất cả tài khoản của công ty. Không thể hoàn tác.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+
+                Text("Gõ **xoa** để xác nhận")
+                    .font(.footnote)
+
+                TextField("Nhập xoa", text: $confirmText)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .padding(14)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                if let error {
+                    Text(error).foregroundStyle(.red).font(.footnote)
+                }
+
+                Button(role: .destructive) {
+                    Task { await purge() }
+                } label: {
+                    Group {
+                        if loading {
+                            ProgressView().tint(.white)
+                        } else {
+                            Text("Xác nhận xoá tất cả")
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+                .disabled(confirmText.trimmingCharacters(in: .whitespaces).lowercased() != "xoa" || loading)
+
+                Spacer()
+            }
+            .padding(24)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Huỷ") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func purge() async {
+        loading = true
+        defer { loading = false }
+        do {
+            let result = try await APIClient.shared.superPurgeCompanyAccounts(companyId: companyId)
+            onPurged(result.deleted ?? 0)
+        } catch {
+            self.error = error.localizedDescription
         }
     }
 }

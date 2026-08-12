@@ -175,6 +175,13 @@ final class APIClient {
         )
     }
 
+    func superPurgeCompanyAccounts(companyId: Int) async throws -> PurgeAccountsResult {
+        try await request(
+            path: "/api/v1/super/companies/\(companyId)/accounts/purge",
+            method: "DELETE"
+        )
+    }
+
     func superChangePassword(id: Int, newPassword: String) async throws -> Account {
         try await request(
             path: "/api/v1/super/accounts/\(id)/change-password",

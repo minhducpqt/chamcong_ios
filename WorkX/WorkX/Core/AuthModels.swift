@@ -250,6 +250,11 @@ struct DeleteAccountResult: Decodable {
     let id: Int?
 }
 
+struct PurgeAccountsResult: Decodable {
+    let deleted: Int?
+    let company_id: Int?
+}
+
 // MARK: - Attendance
 
 struct AttendanceCheckRequest: Encodable {
