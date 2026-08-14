@@ -29,6 +29,9 @@ final class APIClient {
     private let defaults = UserDefaults.standard
     private let tokenKey = "workx.access_token"
 
+    /// Fallback session when IPv4-direct path is unavailable.
+    private let urlSession = URLSession(configuration: .default)
+
     var accessToken: String? {
         get { defaults.string(forKey: tokenKey) }
         set {
@@ -53,6 +56,7 @@ final class APIClient {
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue("application/json", forHTTPHeaderField: "Accept")
+        req.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
         if authorized, let token = accessToken {
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
@@ -60,7 +64,7 @@ final class APIClient {
             req.httpBody = try JSONEncoder().encode(AnyEncodable(body))
         }
 
-        let (data, response) = try await URLSession.shared.data(for: req)
+        let (data, response) = try await IPv4PreferringHTTP.data(for: req, fallbackSession: urlSession)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
 
         if let envelope = try? JSONDecoder().decode(APIEnvelope<T>.self, from: data) {

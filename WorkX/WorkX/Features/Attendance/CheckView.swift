@@ -205,6 +205,9 @@ struct CheckView: View {
                 await loadHistory()
             } else {
                 failMessage = result.message ?? "IP không hợp lệ."
+                if let ip = result.client_ip, !ip.isEmpty, !failMessage.contains(ip) {
+                    failMessage = "\(failMessage)\nIP: \(ip)"
+                }
                 showFailAlert = true
             }
         } catch {
