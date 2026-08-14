@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Network
 
 enum APIError: LocalizedError {
     case invalidURL
@@ -104,7 +105,7 @@ final class APIClient {
         try await request(path: "/api/v1/auth/my-ip")
     }
 
-    /// Fallback khi backend trả IP private/loopback (dev local).
+    /// Fallback khi backend trả IP private/loopback (dev local). Ưu tiên IPv4.
     func fetchPublicIpFallback() async throws -> String {
         guard let url = URL(string: "https://api.ipify.org") else {
             throw APIError.invalidURL
@@ -112,8 +113,29 @@ final class APIClient {
         let (data, _) = try await URLSession.shared.data(from: url)
         let ip = String(data: data, encoding: .utf8)?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        guard !ip.isEmpty else { throw APIError.server("Không lấy được IP") }
+        guard Self.isIpv4(ip) else {
+            throw APIError.server("Không lấy được IPv4")
+        }
         return ip
+    }
+
+    /// IPv4 dotted-quad.
+    static func isIpv4(_ raw: String) -> Bool {
+        let parts = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(separator: ".", omittingEmptySubsequences: false)
+        guard parts.count == 4 else { return false }
+        return parts.allSatisfy { p in
+            guard let n = Int(p), (0...255).contains(n) else { return false }
+            return true
+        }
+    }
+
+    /// IPv4 hoặc IPv6 hợp lệ.
+    static func isIpAddress(_ raw: String) -> Bool {
+        let s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !s.isEmpty else { return false }
+        if isIpv4(s) { return true }
+        return IPv6Address(s) != nil
     }
 
     // MARK: Super — companies

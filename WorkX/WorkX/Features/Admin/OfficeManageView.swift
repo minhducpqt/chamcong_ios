@@ -460,11 +460,17 @@ struct OfficeDetailView: View {
         defer { currentIpLoading = false }
         do {
             let data = try await APIClient.shared.myIp()
-            if data.is_public, !data.ip.isEmpty {
-                currentIp = data.ip
+            let ip = (data.ip ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            if data.is_public, APIClient.isIpAddress(ip) {
+                // Backend đã ưu tiên IPv4; chấp nhận IPv4 hoặc IPv6 public
+                currentIp = ip
+                currentIpPublic = true
+            } else if APIClient.isIpv4(ip), !data.is_public {
+                // Dev/local: backend thấy 127.0.0.1 → lấy WAN IPv4 qua ipify
+                let fallback = try await APIClient.shared.fetchPublicIpFallback()
+                currentIp = fallback
                 currentIpPublic = true
             } else {
-                // Dev/local: backend thấy 127.0.0.1 → lấy WAN qua ipify
                 let fallback = try await APIClient.shared.fetchPublicIpFallback()
                 currentIp = fallback
                 currentIpPublic = true

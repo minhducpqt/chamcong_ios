@@ -62,7 +62,8 @@ struct MeData: Decodable {
 }
 
 struct MyIpData: Decodable {
-    let ip: String
+    /// Ưu tiên IPv4; IPv6 chỉ khi không có IPv4.
+    let ip: String?
     let is_public: Bool
 }
 
