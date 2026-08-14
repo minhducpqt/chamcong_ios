@@ -458,32 +458,9 @@ struct OfficeDetailView: View {
     private func loadCurrentIp() async {
         currentIpLoading = true
         defer { currentIpLoading = false }
-        do {
-            let data = try await APIClient.shared.myIp()
-            let ip = (data.ip ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            if data.is_public, APIClient.isIpAddress(ip) {
-                // Backend đã ưu tiên IPv4; chấp nhận IPv4 hoặc IPv6 public
-                currentIp = ip
-                currentIpPublic = true
-            } else if APIClient.isIpv4(ip), !data.is_public {
-                // Dev/local: backend thấy 127.0.0.1 → lấy WAN IPv4 qua ipify
-                let fallback = try await APIClient.shared.fetchPublicIpFallback()
-                currentIp = fallback
-                currentIpPublic = true
-            } else {
-                let fallback = try await APIClient.shared.fetchPublicIpFallback()
-                currentIp = fallback
-                currentIpPublic = true
-            }
-        } catch {
-            do {
-                currentIp = try await APIClient.shared.fetchPublicIpFallback()
-                currentIpPublic = true
-            } catch {
-                currentIp = nil
-                currentIpPublic = false
-            }
-        }
+        let result = await APIClient.shared.resolveOfficeCurrentIp()
+        currentIp = result.ip
+        currentIpPublic = result.isPublic
     }
 
     private func addCurrentIp() async {

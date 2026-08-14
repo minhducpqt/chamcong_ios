@@ -100,13 +100,14 @@ final class APIClient {
         try await request(path: "/api/v1/auth/me")
     }
 
-    /// IP external như backend nhìn thấy (dùng thêm nhanh IP trụ sở).
+    /// IP external như backend nhìn thấy (phục vụ chấm công / debug).
     func myIp() async throws -> MyIpData {
         try await request(path: "/api/v1/auth/my-ip")
     }
 
-    /// Fallback khi backend trả IP private/loopback (dev local). Ưu tiên IPv4.
-    func fetchPublicIpFallback() async throws -> String {
+    /// Public IPv4 WAN qua ipify (endpoint IPv4-only).
+    /// Dùng khi thêm IP trụ sở — không phụ thuộc kết nối API đang là v4 hay v6.
+    func fetchPublicIpv4() async throws -> String {
         guard let url = URL(string: "https://api.ipify.org") else {
             throw APIError.invalidURL
         }
@@ -117,6 +118,39 @@ final class APIClient {
             throw APIError.server("Không lấy được IPv4")
         }
         return ip
+    }
+
+    /// Resolve IP để admin thêm vào whitelist: ưu tiên IPv4, IPv6 chỉ khi không có IPv4.
+    func resolveOfficeCurrentIp() async -> (ip: String?, isPublic: Bool) {
+        let backend: MyIpData?
+        do {
+            backend = try await myIp()
+        } catch {
+            backend = nil
+        }
+        let backendIp = (backend?.ip ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let backendPublic = backend?.is_public == true
+
+        // 1) Backend đã thấy IPv4 public → dùng (khớp chấm công qua IPv4)
+        if backendPublic, Self.isIpv4(backendIp) {
+            return (backendIp, true)
+        }
+
+        // 2) Luôn thử IPv4 WAN qua ipify (kể cả khi /my-ip trả IPv6 vì app nối API bằng v6)
+        if let v4 = try? await fetchPublicIpv4() {
+            return (v4, true)
+        }
+
+        // 3) Không có IPv4 → mới dùng IPv6 public từ backend
+        if backendPublic, Self.isIpAddress(backendIp), !Self.isIpv4(backendIp) {
+            return (backendIp, true)
+        }
+
+        // 4) Dev/local: hiện IP private từ backend nếu có
+        if Self.isIpAddress(backendIp) {
+            return (backendIp, false)
+        }
+        return (nil, false)
     }
 
     /// IPv4 dotted-quad.
