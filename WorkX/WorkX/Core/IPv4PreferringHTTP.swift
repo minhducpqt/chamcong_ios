@@ -93,10 +93,12 @@ enum IPv4PreferringHTTP {
         let port: UInt16 = UInt16(request.url?.port ?? 443)
         let tcp = NWProtocolTCP.Options()
         let tls = NWProtocolTLS.Options()
-        sec_protocol_options_set_tls_server_name(
-            tls.securityProtocolOptions,
-            host as CFString
-        )
+        host.withCString { cName in
+            sec_protocol_options_set_tls_server_name(
+                tls.securityProtocolOptions,
+                cName
+            )
+        }
         let params = NWParameters(tls: tls, tcp: tcp)
         let connection = NWConnection(
             host: NWEndpoint.Host(ipv4),
